@@ -4,14 +4,14 @@ const Table = (props) => {
 
     return (
         <div>
-            <table style={{ border: "1px solid black" }}>
+            <table className="table">
                 <tbody>
                     {props.table.map((row, id) => (
-                        <tr key={id}>
+                        <tr key={id} className="border_bottom">
                             <td>
                                 {row.name}
                             </td>
-                            <td>
+                            <td className={row.finalScore ? "finalScore" : "notFinalScore"} onClick={() => props.onResultClick(row)}>
                                 {row.value}
                             </td>
 
@@ -19,7 +19,7 @@ const Table = (props) => {
                     ))}
                 </tbody>
             </table>
-        </div>
+        </div >
     );
 };
 

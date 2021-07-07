@@ -6,7 +6,7 @@ const Board = () => {
     const [sides] = useState(["1", "2", "3", "4", "5", "6"]);
     const [dices, setDices] = useState([])
     const [rolling, setRolling] = useState(false);
-    const [rolls, setRolls] = useState(3)
+    const [rolls, setRolls] = useState(2)
 
 
     const createDice = useCallback(() => {
@@ -26,31 +26,31 @@ const Board = () => {
         setDices(dices);
     }, [createDice])
 
-    const roll = () => {
-        // if (rolls > 0) {
-        let dicesCopy = dices.slice();
-        for (let i = 0; i < dicesCopy.length; i++) {
-            if (dicesCopy[i].freezed === true) {
-                continue;
-            }
-            dicesCopy[i].value = sides[Math.floor(Math.random() * sides.length)];
+    const roll = (rolls) => {
+        if (rolls > 0) {
+            let dicesCopy = dices.slice();
+            for (let i = 0; i < dicesCopy.length; i++) {
+                if (dicesCopy[i].freezed === true) {
+                    continue;
+                }
+                dicesCopy[i].value = sides[Math.floor(Math.random() * sides.length)];
 
+            }
+            setRolling(true)
+            setRolls(rolls - 1)
+            setTimeout(() => {
+                setRolling(false)
+            }, 1000);
+            chackAllCases(dicesCopy)
+            setDices(dicesCopy)
         }
-        setRolling(true)
-        setRolls(rolls - 1)
-        setTimeout(() => {
-            setRolling(false)
-        }, 1000);
-        chackAllCases(dicesCopy)
-        setDices(dicesCopy)
-        //   }
     }
-    const [table, setTable] = useState([{ name: "Ones", value: 0 }, { name: "Twos", value: 0 },
-    { name: "Threes", value: 0 }, { name: "Fours", value: 0 },
-    { name: "Fives", value: 0 }, { name: "Sixes", value: 0 },
-    { name: "3 of Kind", value: 0 }, { name: "4 of Kind", value: 0 },
-    { name: "Full House", value: 0 }, { name: "Small Straight", value: 0 },
-    { name: "Large Straight", value: 0 }, { name: "Yatzy", value: 0 },
+    const [table, setTable] = useState([{ name: "Ones", value: 0, finalScore: false }, { name: "Twos", value: 0, finalScore: false },
+    { name: "Threes", value: 0, finalScore: false }, { name: "Fours", value: 0, finalScore: false },
+    { name: "Fives", value: 0, finalScore: false }, { name: "Sixes", value: 0, finalScore: false },
+    { name: "3 of Kind", value: 0, finalScore: false }, { name: "4 of Kind", value: 0, finalScore: false },
+    { name: "Full House", value: 0, finalScore: false }, { name: "Small Straight", value: 0, finalScore: false },
+    { name: "Large Straight", value: 0, finalScore: false }, { name: "Yatzy", value: 0, finalScore: false }, { name: "Chance", value: 0, finalScore: false }
     ]);
 
     const freez = (id) => {
@@ -68,112 +68,199 @@ const Board = () => {
         setDices(dicesCopy)
     }
 
-    const chackAllCases = (dices) => {
+    const addingNumber = (array, tableCopy, number, position) => {
+        let finalNumber = 0;
+        for (let i = 0; i < array.length; i++) {
+            if (array[i] === number) {
+                finalNumber += number;
+            }
+        }
+        tableCopy[position].value = finalNumber;
+    }
+
+    const threeAndFourOfKind = (array, tableCopy, number, position) => {
+        let arrayCopy = array.slice()
+        arrayCopy.sort();
+        arrayCopy.reverse();
+        let finalNumber = 0;
+        for (let i = 0; i <= arrayCopy.length - number; i++) {
+            if (number === 3) {
+                if (arrayCopy[i] === arrayCopy[i + 1] && arrayCopy[i] === arrayCopy[i + 2]) {
+                    for (let i = 0; i < arrayCopy.length; i++) {
+                        finalNumber += arrayCopy[i];
+                    }
+                    break;
+                }
+            } else {
+                if (arrayCopy[i] === arrayCopy[i + 1] && arrayCopy[i] === arrayCopy[i + 2] && arrayCopy[i] === arrayCopy[i + 3]) {
+                    for (let i = 0; i < arrayCopy.length; i++) {
+                        finalNumber += arrayCopy[i];
+                    }
+                    break;
+                }
+            }
+        }
+        tableCopy[position].value = finalNumber;
+    }
+
+    const fullHouse = (array, tableCopy, position) => {
+        let arrayCopy = array.slice()
+        arrayCopy.sort();
+        arrayCopy.reverse();
+        let finalNumber = 0;
+        for (let i = 0; i <= arrayCopy.length - 3; i++) {
+            if (arrayCopy[i] === arrayCopy[i + 1] && arrayCopy[i] === arrayCopy[i + 2]) {
+                arrayCopy.splice(i, 3);
+                if (arrayCopy[0] === arrayCopy[1]) {
+                    finalNumber = 25;
+                }
+                break;
+            }
+        }
+        tableCopy[position].value = finalNumber;
+    }
+
+    const smallAndLargeStraight = (array, tableCopy, type, position) => {
+        let finalNumber = 0;
+        let arrayCopy = array.slice();
+        arrayCopy.sort();
+        if (type === 4) {
+            if (/12+3+4|23+4+5|34+5+6/.test(arrayCopy.join(""))) {
+                finalNumber = 30;
+            }
+        } else {
+            if (/12345|23456/.test(arrayCopy.join(""))) {
+                finalNumber = 40;
+            }
+        }
+        tableCopy[position].value = finalNumber;
+    }
+
+    const yatzy = (array, tableCopy, position) => {
+        let finalNumber = 0;
+        let arrayCopy = array.slice();
+        arrayCopy.sort();
+
+        if (arrayCopy[0] === arrayCopy[arrayCopy.length - 1]) {
+            finalNumber = 50;
+        }
+
+        tableCopy[position].value = finalNumber;
+    }
+
+    const chance = (array, tableCopy, position) => {
+        let finalNumber = 0;
+        for (let i = 0; i < array.length; i++) {
+            finalNumber += array[i];
+        }
+        tableCopy[position].value = finalNumber;
+
+    }
+
+    const chackAllCases = () => {
         const array = [];
-        const daCopy = table.slice();
+        const tableCopy = table.slice();
         for (let i = 0; i < dices.length; i++) {
             array.push(parseInt(dices[i].value));
         }
 
-        for (let i = 0; i < daCopy.length; i++) {
-            switch (daCopy[i].name) {
+        for (let i = 0; i < tableCopy.length; i++) {
+            switch (tableCopy[i].name) {
                 case "Ones":
-                    let ones = 0;
-                    for (let i = 0; i < array.length; i++) {
-                        if (array[i] === 1) {
-                            ones += 1;
-                        }
+                    if (!tableCopy[i].finalScore) {
+                        addingNumber(array, tableCopy, 1, i);
                     }
-
-                    daCopy[i].value = ones;
                     break;
                 case "Twos":
-                    let twos = 0;
-                    for (let i = 0; i < array.length; i++) {
-                        if (array[i] === 2) {
-                            twos += 2;
-                        }
+                    if (!tableCopy[i].finalScore) {
+                        addingNumber(array, tableCopy, 2, i);
                     }
-                    daCopy[i].value = twos;
                     break;
                 case "Threes":
-                    let threes = 0;
-                    for (let i = 0; i < array.length; i++) {
-                        if (array[i] === 3) {
-                            threes += 3;
-                        }
+                    if (!tableCopy[i].finalScore) {
+                        addingNumber(array, tableCopy, 3, i);
                     }
-                    daCopy[i].value = threes;
                     break;
                 case "Fours":
-                    let fours = 0;
-                    for (let i = 0; i < array.length; i++) {
-                        if (array[i] === 4) {
-                            fours += 4;
-                        }
+                    if (!tableCopy[i].finalScore) {
+                        addingNumber(array, tableCopy, 4, i);
                     }
-                    daCopy[i].value = fours;
                     break;
                 case "Fives":
-                    let fives = 0;
-                    for (let i = 0; i < array.length; i++) {
-                        if (array[i] === 5) {
-                            fives += 5;
-                        }
+                    if (!tableCopy[i].finalScore) {
+                        addingNumber(array, tableCopy, 5, i);
                     }
-                    daCopy[i].value = fives;
                     break;
                 case "Sixes":
-                    let sixes = 0;
-                    for (let i = 0; i < array.length; i++) {
-                        if (array[i] === 6) {
-                            sixes += 6;
-                        }
+                    if (!tableCopy[i].finalScore) {
+                        addingNumber(array, tableCopy, 6, i);
                     }
-                    daCopy[i].value = sixes;
                     break;
                 case "3 of Kind":
-                    let threeOfKind = 0;
-                    let copyArray = array.slice()
-                    copyArray.sort();
-                    copyArray.reverse();
-                    console.log(copyArray)
-                    for (let i = 0; i <= array.length - 3; i++) {
-                        if (array[i] === array[i + 1] && array[i] === array[i + 2]) {
-                            threeOfKind = array[i] * 3;
-                            copyArray.splice(i, i + 3);
-                            console.log(copyArray)
-                            console.log(copyArray[3])
-                            //  threeOfKind += copyArray[0] + copyArray[1];
-                        }
+                    if (!tableCopy[i].finalScore) {
+                        threeAndFourOfKind(array, tableCopy, 3, i)
                     }
-
-                    daCopy[i].value = threeOfKind;
                     break;
                 case "4 of Kind":
-                    let arrayCopy = array.slice()
-                    let fourOfKind = 0;
-                    arrayCopy.sort();
-                    arrayCopy.reverse();
-                    for (let i = 0; i <= arrayCopy.length - 4; i++) {
-                        if (array[i] === arrayCopy[i + 1] && arrayCopy[i] === arrayCopy[i + 2] && arrayCopy[i] === arrayCopy[i + 3]) {
-                            fourOfKind = arrayCopy[i] * 4;
-                            arrayCopy.splice(i, i + 4);
-                            fourOfKind += arrayCopy[0];
-                        }
+                    if (!tableCopy[i].finalScore) {
+                        threeAndFourOfKind(array, tableCopy, 4, i)
                     }
-                    daCopy[i].value = fourOfKind;
+                    break;
+                case "Full House":
+                    if (!tableCopy[i].finalScore) {
+                        fullHouse(array, tableCopy, i)
+                    }
+                    break;
+                case "Small Straight":
+                    if (!tableCopy[i].finalScore) {
+                        smallAndLargeStraight(array, tableCopy, 4, i)
+                    }
+                    break;
+                case "Large Straight":
+                    if (!tableCopy[i].finalScore) {
+                        smallAndLargeStraight(array, tableCopy, 5, i)
+                    }
+                    break;
+                case "Yatzy":
+                    if (!tableCopy[i].finalScore) {
+                        yatzy(array, tableCopy, i)
+                    }
+                    break;
+                case "Chance":
+                    if (!tableCopy[i].finalScore) {
+                        chance(array, tableCopy, i);
+                    }
                     break;
                 default:
-
             }
-            setTable(daCopy)
+            setTable(tableCopy)
         }
     }
 
-    console.log()
+    const onResultClick = (row) => {
+        if (!row.finalScore) {
+            let dicesCopy = dices.slice();
+            for (let i = 0; i < dicesCopy.length; i++) {
+                if (dicesCopy[i].freezed === true) {
+                    dicesCopy[i].freezed = false;
+                }
+            }
+            setDices(dicesCopy);
+
+            let tableCopy = table.slice();
+            for (let i = 0; i < tableCopy.length; i++) {
+                if (row.name === tableCopy[i].name) {
+                    tableCopy[i].finalScore = true;
+                }
+            }
+            roll(3);
+            setTable(tableCopy)
+
+        }
+    }
     return (
-        <div>
+        <div className="gameWrapper">
+            <Table table={table} onResultClick={onResultClick} />
             <div className='diceAndButtom'>
                 <div className="allDices">
                     {dices.map((dice, id) => {
@@ -182,12 +269,12 @@ const Board = () => {
                 </div>
                 <button className={rolling ? "button-rolling" : "button"}
                     disabled={rolling}
-                    onClick={roll}>
+                    onClick={() => roll(rolls)}>
                     {rolling ? "Rolling" : rolls + " roll left"}
                 </button>
             </div>
-            <Table table={table} />
-        </div>
+
+        </div >
     );
 };
 
