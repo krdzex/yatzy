@@ -7,7 +7,8 @@ const Board = () => {
     const [dices, setDices] = useState([])
     const [rolling, setRolling] = useState(false);
     const [rolls, setRolls] = useState(2)
-
+    const [revealed, setRevealed] = useState(13);
+    const [finalScore, setFinalScore] = useState(0)
 
     const createDice = useCallback(() => {
         let dices = [];
@@ -16,14 +17,19 @@ const Board = () => {
                 dice: i,
                 value: sides[Math.floor(Math.random() * sides.length)],
                 freezed: false
-
             })
         }
         return dices
     }, [sides])
     useEffect(() => {
         const dices = createDice();
+        chackAllCases(dices)
         setDices(dices);
+        setRolling(true)
+        setTimeout(() => {
+            setRolling(false)
+        }, 1000);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [createDice])
 
     const roll = (rolls) => {
@@ -45,27 +51,29 @@ const Board = () => {
             setDices(dicesCopy)
         }
     }
-    const [table, setTable] = useState([{ name: "Ones", value: 0, finalScore: false }, { name: "Twos", value: 0, finalScore: false },
-    { name: "Threes", value: 0, finalScore: false }, { name: "Fours", value: 0, finalScore: false },
-    { name: "Fives", value: 0, finalScore: false }, { name: "Sixes", value: 0, finalScore: false },
-    { name: "3 of Kind", value: 0, finalScore: false }, { name: "4 of Kind", value: 0, finalScore: false },
-    { name: "Full House", value: 0, finalScore: false }, { name: "Small Straight", value: 0, finalScore: false },
-    { name: "Large Straight", value: 0, finalScore: false }, { name: "Yatzy", value: 0, finalScore: false }, { name: "Chance", value: 0, finalScore: false }
+    const [table, setTable] = useState([{ name: "Ones", value: 0, finalScore: false, rule: "Sum of all Ones" }, { name: "Twos", value: 0, finalScore: false, rule: "Sum of all Twos" },
+    { name: "Threes", value: 0, finalScore: false, rule: "Sum of all Threes" }, { name: "Fours", value: 0, finalScore: false, rule: "Sum of all Fours" },
+    { name: "Fives", value: 0, finalScore: false, rule: "Sum of all Fives" }, { name: "Sixes", value: 0, finalScore: false, rule: "Sum of all Sixes" },
+    { name: "3 of Kind", value: 0, finalScore: false, rule: "Sum of all dice if 3 are the same" }, { name: "4 of Kind", value: 0, finalScore: false, rule: "Sum of all dice if 4 are the same" },
+    { name: "Full House", value: 0, finalScore: false, rule: "25 points for 3 dice of one value and 2 dice of another value" }, { name: "Small Straight", value: 0, finalScore: false, rule: "Score 30 if 4+ values in row" },
+    { name: "Large Straight", value: 0, finalScore: false, rule: "Score 40 if 5 values in a row" }, { name: "Yatzy", value: 0, finalScore: false, rule: "Score 50 if all values match" }, { name: "Chance", value: 0, finalScore: false, rule: "Score sum of all dice" }
     ]);
 
     const freez = (id) => {
-        let dicesCopy = dices.slice();
-        for (let i = 0; i < dicesCopy.length; i++) {
-            if (dicesCopy[i].dice === id) {
-                if (dicesCopy[i].freezed === false) {
-                    dicesCopy[i].freezed = true;
-                } else {
-                    dicesCopy[i].freezed = false;
+        if (rolling === false) {
+            let dicesCopy = dices.slice();
+            for (let i = 0; i < dicesCopy.length; i++) {
+                if (dicesCopy[i].dice === id) {
+                    if (dicesCopy[i].freezed === false) {
+                        dicesCopy[i].freezed = true;
+                    } else {
+                        dicesCopy[i].freezed = false;
+                    }
                 }
             }
-        }
 
-        setDices(dicesCopy)
+            setDices(dicesCopy)
+        }
     }
 
     const addingNumber = (array, tableCopy, number, position) => {
@@ -157,13 +165,15 @@ const Board = () => {
 
     }
 
-    const chackAllCases = () => {
+    const chackAllCases = (dices2) => {
+        console.log(dices2)
         const array = [];
         const tableCopy = table.slice();
-        for (let i = 0; i < dices.length; i++) {
-            array.push(parseInt(dices[i].value));
+        for (let i = 0; i < dices2.length; i++) {
+            array.push(parseInt(dices2[i].value));
         }
-
+        console.log(array)
+        console.log(tableCopy)
         for (let i = 0; i < tableCopy.length; i++) {
             switch (tableCopy[i].name) {
                 case "Ones":
@@ -238,7 +248,10 @@ const Board = () => {
     }
 
     const onResultClick = (row) => {
-        if (!row.finalScore) {
+        if (!row.finalScore && !rolling) {
+            // let integer = revealed - 1;
+
+            setRevealed(revealed - 1)
             let dicesCopy = dices.slice();
             for (let i = 0; i < dicesCopy.length; i++) {
                 if (dicesCopy[i].freezed === true) {
@@ -251,29 +264,38 @@ const Board = () => {
             for (let i = 0; i < tableCopy.length; i++) {
                 if (row.name === tableCopy[i].name) {
                     tableCopy[i].finalScore = true;
+                    setFinalScore(finalScore + tableCopy[i].value)
                 }
             }
             roll(3);
             setTable(tableCopy)
-
+            /* if (integer === 0) {
+            let sum = 0;
+            for (let i = 0; i < tableCopy.length; i++) {
+                sum += tableCopy[i].value;
+            }
+            setFinalScore(sum)
+              }*/
+            // setRevealed(integer)
         }
     }
     return (
         <div className="gameWrapper">
-            <Table table={table} onResultClick={onResultClick} />
+
             <div className='diceAndButtom'>
+                <div className="title">Yatzy</div>
                 <div className="allDices">
                     {dices.map((dice, id) => {
-                        return <Die diceInfo={dice} id={id} key={id} freez={freez} />
+                        return <Die diceInfo={dice} id={id} key={id} freez={freez} rolling={rolling} />
                     })}
                 </div>
-                <button className={rolling ? "button-rolling" : "button"}
+                <button className={rolling ? "button-rolling" : rolls > 0 ? "button" : "button unactive"}
                     disabled={rolling}
                     onClick={() => roll(rolls)}>
                     {rolling ? "Rolling" : rolls + " roll left"}
                 </button>
             </div>
-
+            <Table table={table} onResultClick={onResultClick} finalScore={finalScore} />
         </div >
     );
 };
