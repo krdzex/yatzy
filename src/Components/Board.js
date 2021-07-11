@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import Die from './Die';
 import Table from './Table';
+import GameHeader from './GameHeader';
 
 const Board = () => {
     const [sides] = useState(["1", "2", "3", "4", "5", "6"]);
@@ -9,6 +9,7 @@ const Board = () => {
     const [rolls, setRolls] = useState(2)
     const [revealed, setRevealed] = useState(13);
     const [finalScore, setFinalScore] = useState(0)
+    const [showPlayAgain, setShowPlayAgain] = useState(false)
 
     const createDice = useCallback(() => {
         let dices = [];
@@ -29,6 +30,7 @@ const Board = () => {
         setTimeout(() => {
             setRolling(false)
         }, 1000);
+        localStorage.setItem("totalScore", JSON.stringify(finalScore));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [createDice])
 
@@ -60,7 +62,7 @@ const Board = () => {
     ]);
 
     const freez = (id) => {
-        if (rolling === false) {
+        if (rolling === false && revealed !== 0) {
             let dicesCopy = dices.slice();
             for (let i = 0; i < dicesCopy.length; i++) {
                 if (dicesCopy[i].dice === id) {
@@ -249,9 +251,9 @@ const Board = () => {
 
     const onResultClick = (row) => {
         if (!row.finalScore && !rolling) {
-            // let integer = revealed - 1;
+            let integer = revealed - 1;
 
-            setRevealed(revealed - 1)
+            setRevealed(integer)
             let dicesCopy = dices.slice();
             for (let i = 0; i < dicesCopy.length; i++) {
                 if (dicesCopy[i].freezed === true) {
@@ -269,32 +271,45 @@ const Board = () => {
             }
             roll(3);
             setTable(tableCopy)
-            /* if (integer === 0) {
-            let sum = 0;
-            for (let i = 0; i < tableCopy.length; i++) {
-                sum += tableCopy[i].value;
+            if (integer === 0) {
+                setShowPlayAgain(true);
+                let highScore = localStorage.getItem("highScore");
+                if (highScore === null) {
+                    localStorage.setItem("highScore", JSON.stringify(0));
+                }
+
             }
-            setFinalScore(sum)
-              }*/
-            // setRevealed(integer)
         }
     }
+
+    const playAgain = () => {
+        localStorage.setItem("totalScore", JSON.stringify(finalScore));
+
+        let hightScore = localStorage.getItem("highScore")
+        if (hightScore < finalScore) {
+            localStorage.setItem("highScore", JSON.stringify(finalScore));
+        }
+        chackAllCases(dices)
+        let tableCopy = table.slice();
+        for (let i = 0; i < tableCopy.length; i++) {
+            tableCopy[i].finalScore = false;
+        }
+        setTable(tableCopy)
+        setRolls(2);
+        setRevealed(13);
+        setFinalScore(0);
+        setShowPlayAgain(false);
+        roll(3)
+    }
+
+    window.onload = function () {
+        localStorage.removeItem("highScore");
+        localStorage.removeItem("totalScore");
+    }
+
     return (
         <div className="gameWrapper">
-
-            <div className='diceAndButtom'>
-                <div className="title">Yatzy</div>
-                <div className="allDices">
-                    {dices.map((dice, id) => {
-                        return <Die diceInfo={dice} id={id} key={id} freez={freez} rolling={rolling} />
-                    })}
-                </div>
-                <button className={rolling ? "button-rolling" : rolls > 0 ? "button" : "button unactive"}
-                    disabled={rolling}
-                    onClick={() => roll(rolls)}>
-                    {rolling ? "Rolling" : rolls + " roll left"}
-                </button>
-            </div>
+            <GameHeader freez={freez} rolls={rolls} rolling={rolling} roll={roll} dices={dices} showPlayAgain={showPlayAgain} playAgain={playAgain} />
             <Table table={table} onResultClick={onResultClick} finalScore={finalScore} />
         </div >
     );
