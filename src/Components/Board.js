@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import Table from './Table';
 import GameHeader from './GameHeader';
+import ScoreBoard from './ScoreBoard';
 
 const Board = () => {
     const [sides] = useState(["1", "2", "3", "4", "5", "6"]);
@@ -310,7 +310,8 @@ const Board = () => {
     return (
         <div className="gameWrapper">
             <GameHeader freez={freez} rolls={rolls} rolling={rolling} roll={roll} dices={dices} showPlayAgain={showPlayAgain} playAgain={playAgain} />
-            <Table table={table} onResultClick={onResultClick} finalScore={finalScore} />
+            <ScoreBoard table={table} onResultClick={onResultClick} finalScore={finalScore} />
+
         </div >
     );
 };

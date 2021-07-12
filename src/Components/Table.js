@@ -1,12 +1,19 @@
 import React from 'react';
 
 const Table = (props) => {
+    let hightScore = localStorage.getItem("highScore")
 
     return (
         <div className="tableWrapper">
-            <div className="score">
-                <p>Total score: {props.finalScore}</p>
+            <div className="scoreBoard">
+                <div className="score">
+                    <p>Total score: {props.finalScore}</p>
+                </div>
+                {hightScore !== null && hightScore > 0 ? <div className="score">
+                    <p>Highest score: {hightScore}</p>
+                </div> : ""}
             </div>
+
             <table className="table">
                 <tbody>
                     {props.table.map((row, id) => (
